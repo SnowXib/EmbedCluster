@@ -1,0 +1,85 @@
+InfoScreen {
+    align: center middle;
+}
+
+#container_main {
+    width: 120;
+    height: 43;
+    border: tall #C5C6C7;
+    background: #1F2833;
+}
+
+#container_head {
+    layout: horizontal;
+    height: 6;
+    margin: 0 2 0 2;
+    width: 100%;
+    background: #222629;
+    border: tall #45A29E;
+}
+
+#static_label {
+    content-align-horizontal: center;
+    color: #66FCF1;
+}
+
+#container_instruction {
+    width: 100%;
+    height: auto;
+}
+
+#scrollable_container_instruction { 
+    scrollbar-background: #1F2833;
+    scrollbar-color: #66FCF1;
+    scrollbar-color-active: #FCE181;
+    scrollbar-color-hover: #45A29E;
+}
+
+#markdown_instruction_heading1,
+#markdown_instruction_heading2,
+#markdown_instruction_heading3,
+#markdown_instruction_heading4,
+#markdown_instruction_heading5 {
+    color: #C5C6C7;
+}
+
+#markdown_instruction_information1,
+#markdown_instruction_information2,
+#markdown_instruction_information3,
+#markdown_instruction_information4,
+#markdown_instruction_information5 {
+    color: #7c7c7d;
+}
+
+#container_buttons {
+    layout: horizontal;
+    dock: bottom;
+    width: 100%;
+    margin: 0 2 1 2;
+    height: 5;
+    background: #222629;
+    border: tall #45A29E;
+}
+
+#button_start {
+    margin-left: 25;
+    dock: left;
+    background: #66FCF1;
+    color: #0B0C10;
+}
+
+#button_start:hover {
+    background: #45A29E;
+}
+
+#demo_button {
+    margin-right: 25;
+    dock: right;
+    background: #FCE181;
+    color: #0B0C10;
+}
+
+#demo_button:hover {
+    background: #b8a04f
+}
+

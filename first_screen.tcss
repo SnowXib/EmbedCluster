@@ -1,0 +1,39 @@
+FirstScreen {
+    layout: grid;
+    align: center middle;
+}
+
+#container_first {
+    height: 18;
+    width: 120;
+    border: tall #C5C6C7;
+    background: #1F2833;
+}
+
+#static_logo {
+    content-align: center middle;
+}
+
+#container_start {
+    layout: vertical;
+}
+
+#static_info {
+    width: 100%;
+    height: auto;
+    content-align-vertical: middle;
+    color: #C5C6C7;
+    margin: 0 3 0 3;
+}
+
+#button_start_work {
+    content-align-vertical: middle;
+    width: 100%;
+    background: #66FCF1;
+    color: #0B0C10;
+    margin: 2 3 2 3;
+}
+
+#button_start_work:hover {
+    background: #45A29E;
+}

@@ -1,0 +1,112 @@
+MainScreen{
+    align: center middle;
+}
+
+#container_main {
+    width: 120;
+    height: 43;
+    border: tall #C5C6C7;
+    background: #1F2833;
+    content-align: center middle;
+}
+
+#container_head {
+    layout: horizontal;
+    height: 6;
+    margin: 0 2 0 2;
+    width: 100%;
+    background: #222629;
+    border: tall #45A29E;
+}
+
+#static_label {
+    content-align-horizontal: center;
+    color: #66FCF1;
+}
+
+#container_instruction {
+    width: 100%;
+    height: auto;
+}
+
+#container_body {
+    align: center middle;
+}
+
+#scrollable_container_instruction { 
+    scrollbar-background: #1F2833;
+    scrollbar-color: #66FCF1;
+    scrollbar-color-active: #FCE181;
+    scrollbar-color-hover: #45A29E;
+}
+
+#container_inputs {
+    layout: horizontal;
+    width: 50;
+    height: 10;
+    background: #222629;
+    border: tall #45A29E;
+    align: center middle;
+}
+
+#vertical_input {
+    width: 40;
+    dock: left;
+    layout: vertical;
+}
+
+#vertical_checkbox {
+    width: 40;
+    dock: right;
+    layout: vertical;
+}
+
+#input_dataframe {
+
+}
+
+#input_column {
+
+}
+
+#input_api_key {
+
+}
+
+#input_algoritm {
+
+}
+
+#optionlist_embedding {
+
+}
+
+#checkbox_cluster {
+
+}
+
+#checkbox_embed {
+
+}
+
+.dock #button_start {
+}
+
+#container_inputs {
+    layout: grid;
+}
+
+.error {
+    text-style: bold;
+}
+
+.error #static_error {
+    display: block;
+}
+
+#static_error {
+    dock: top;
+    color: #e74c3c;
+    display: None;
+    margin-left: 1;
+}
