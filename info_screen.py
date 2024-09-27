@@ -9,6 +9,7 @@ from art import text2art
 class InfoScreen(Screen):
 
     CSS_PATH = 'info_screen.tcss'
+    AUTO_FOCUS = '#button_start'
     
     
 
@@ -93,4 +94,3 @@ class InfoScreen(Screen):
             self.app.push_screen(MainScreen())
         elif event.button.id == 'demo_button':
             pass
-
