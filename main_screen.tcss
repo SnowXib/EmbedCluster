@@ -3,7 +3,7 @@ MainScreen{
 }
 
 #container_main {
-    width: 120;
+    width: 121;
     height: 43;
     border: tall #C5C6C7;
     background: #1F2833;
@@ -40,16 +40,40 @@ MainScreen{
     scrollbar-color-hover: #45A29E;
 }
 
-#container_inputs {
-    layout: horizontal;
-    width: 50;
-    height: 10;
-    background: #222629;
+#checkbox_def,
+#checkbox_embed,
+#checkbox_cluster{
+    width: 38;
+}
+
+#checkbox_cluster,
+#checkbox_embed,
+#checkbox_def {
     border: tall #45A29E;
+}
+
+#input_column,
+#input_api_key,
+#input_dataframe{
+    border: tall #45A29E;
+
+}
+
+#input_algoritm {
+    color: #b8a04f;
+}
+
+#container_inputs {
     align: center middle;
+    width: 100%;
+    margin: 0 7 1 7;
+    height: 18;
+    background: #222629;
+    border: tall #FCE181;
 }
 
 #vertical_input {
+    margin-top: 1;
     width: 40;
     dock: left;
     layout: vertical;
@@ -61,40 +85,30 @@ MainScreen{
     layout: vertical;
 }
 
-#input_dataframe {
+#radio_group {
+    background: #222629;
+} 
 
+#b {
+    background: #66FCF1;
+    color: #0B0C10;
+    margin-left: 45;
 }
 
-#input_column {
-
+#container_b {
+    layout: horizontal;
+    dock: bottom;
+    width: 100%;
+    margin: 0 2 1 2;
+    height: 5;
+    background: #222629;
+    border: tall #45A29E;
 }
 
-#input_api_key {
-
+#b:hover {
+    background: #66FCF1;
 }
 
-#input_algoritm {
-
-}
-
-#optionlist_embedding {
-
-}
-
-#checkbox_cluster {
-
-}
-
-#checkbox_embed {
-
-}
-
-.dock #button_start {
-}
-
-#container_inputs {
-    layout: grid;
-}
 
 .error {
     text-style: bold;
@@ -102,6 +116,18 @@ MainScreen{
 
 .error #static_error {
     display: block;
+}
+
+#button_insert_api_key {
+    background: #FCE181;
+    color: #0B0C10;
+    margin-left: 1;
+    margin-top: 2;
+    width: 37;
+}
+
+#button_insert_api_key:hover {
+    background: #b8a04f
 }
 
 #static_error {
