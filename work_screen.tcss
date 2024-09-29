@@ -1,0 +1,22 @@
+WorkScreen{
+    align: center middle;
+}
+
+
+
+
+
+
+
+
+
+
+#butt{
+    background: #66FCF1;
+    color: #0B0C10;
+    margin-left: 45;
+}
+
+#butt:hover {
+    background: #66FCF1;
+}

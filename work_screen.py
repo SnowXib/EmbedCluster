@@ -9,6 +9,7 @@ import os.path
 import pandas as pd
 import json
 import openai
+from requests.exceptions import RequestException
 
 
 class WorkScreen(Screen):
@@ -66,35 +67,25 @@ class WorkScreen(Screen):
         api_key = self.input_api_key
 
         try:
-            client = openai(
+            # Инициализация клиента OpenAI с использованием прокси
+            client = openai.Embedding.create(
                 api_key=str(api_key),
                 base_url="https://api.proxyapi.ru/openai/v1"
             )
 
+            # Запрос эмбеддингов
             response = client.embeddings.create(input=[text], model=model)
 
-            embedding = response.data[0].embedding
+            # Получение эмбеддинга
+            embedding = response['data'][0]['embedding']
             return embedding
 
-        except error.AuthenticationError as e:
-            info.update('Ошибка аутентификации')
-            print(f"Ошибка аутентификации: {e}")
-            return None
-
-        except error.RateLimitError as e:
-            info.update('Превышен лимит запросов')
-            print(f"Превышен лимит запросов: {e}")
-            return None
-
-        except error.OpenAIError as e:
-            info.update('Ошибка API OpenAI')
-            print(f"Ошибка API OpenAI: {e}")
-            return None
-
+        except RequestException as e:
+            info.update("Ошибка сети: проверьте подключение к интернету.")
         except Exception as e:
-            info.update('Произошла непредвиденная ошибка')
-            print(f"Произошла непредвиденная ошибка: {e}")
-            return None
+            info.update(f"Произошла неизвестная ошибка: {e}")
+
+        return None
 
 
     def logging(self, id_log, log):
@@ -114,8 +105,6 @@ class WorkScreen(Screen):
         self.client_log.extend([log])
 
         static_log.renderable = str(self.client_log)
-
-
 
 
     def state_embedding(self):
