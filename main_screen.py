@@ -85,6 +85,8 @@ class MainScreen(Screen):
                 ),
                 id='container_main',
             )
+        
+        
     @on(RadioSet.Changed, "#radio_group")
     def on_radio_group_changed(self, event: RadioSet.Changed) -> None:
         input_api_key = self.query_one('#input_api_key')
@@ -197,7 +199,7 @@ class MainScreen(Screen):
 
                 elif self.query_one('#checkbox_cluster', RadioButton).value:
 
-                    self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding))
+                    self.app.push_screen(WorkScreen(mode=mode, input_dataframe=input_df, input_column=input_column, input_api_key=input_api_key, input_algoritm=input_algoritm, optionlist_embedding=optionlist_embedding))
 
         else:
             error_widget.update("Форма не заполнена")
