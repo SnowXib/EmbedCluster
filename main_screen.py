@@ -1,7 +1,8 @@
 from textual.app import App, ComposeResult
 from textual import on
-from textual.containers import Container, Vertical, VerticalScroll
-from textual.widgets import Button, Static, Input, OptionList, Select, Checkbox, RadioButton, RadioSet
+from textual.containers import Container, Vertical, VerticalScroll, Horizontal
+from textual.widgets import Button, Static, Input, Select, RadioButton, RadioSet
+from textual.widgets import MaskedInput
 from textual.screen import Screen
 from art import text2art
 import os.path
@@ -55,14 +56,18 @@ class MainScreen(Screen):
                             Input(placeholder='Название датафрейма с расширением', id='input_dataframe'),
                             Input(placeholder='Столбец для кластера', id='input_column'),
                             Input(placeholder='Ваш API ключ', id='input_api_key'),
-                            Select(prompt='Алгоритм кластеризации', tooltip='Информацию об алгоритмах можно получить выше', 
-                                   options=[('ICA', 1), ('MDS', 2), ('PCA', 3), ('T-SNE', 4),
-                                            ('UMAP2D', 5), ('UMAP3D', 6), ('TruncatedSVD', 7)], 
-                                   id='input_algoritm'),
                             Select(prompt='Embedding-model', tooltip='Информация о моделях находится выше', 
                                    options=[('text-embedding-3-small', 1), ('text-embedding-3-large', 2),
                                             ('text-embedding-ada-002', 3)], 
                                             id='optionlist_embedding'),
+                            Container(
+                                Select(prompt='Метод', tooltip='Информацию об алгоритмах можно получить выше', 
+                                       options=[('ICA', 1), ('MDS', 2), ('PCA', 3), ('T-SNE', 4),
+                                                ('UMAP2D', 5), ('TruncatedSVD', 6)], 
+                                       id='input_algoritm'),
+                                MaskedInput(template="999;0", id='maskedinput_cluster'),
+                                id='container_alg'
+                            ),
                             id='vertical_input',
                         ),
                         Container(
@@ -92,10 +97,12 @@ class MainScreen(Screen):
         input_api_key = self.query_one('#input_api_key')
         optionlist_embedding = self.query_one('#optionlist_embedding')
         input_algoritm = self.query_one('#input_algoritm')
+        maskedinput_cluster = self.query_one('#maskedinput_cluster')
 
 
         if event.pressed.id == 'checkbox_embed':
             input_algoritm.disabled = False
+            maskedinput_cluster.disabled = False
             input_api_key.disabled = True
             optionlist_embedding.disabled = True
         
@@ -103,11 +110,14 @@ class MainScreen(Screen):
             input_algoritm.disabled = True
             input_api_key.disabled = True
             optionlist_embedding.disabled = True
+            maskedinput_cluster.disabled = True
         
         elif event.pressed.id == 'checkbox_def':
             input_algoritm.disabled = False
             input_api_key.disabled = False
             optionlist_embedding.disabled = False
+            maskedinput_cluster.disabled = False
+            
 
 
     def insert_password_json(self, password):
@@ -160,6 +170,8 @@ class MainScreen(Screen):
         checkbox_def = self.query_one('#checkbox_def', RadioButton)
         checkbox_embed = self.query_one('#checkbox_embed', RadioButton)
         checkbox_cluster = self.query_one('#checkbox_cluster', RadioButton)
+        maskedinput_cluster = self.query_one('#maskedinput_cluster', MaskedInput).value
+
         mode = ''
 
         if checkbox_def.value:
@@ -178,21 +190,21 @@ class MainScreen(Screen):
                 error_widget.update("Столбец не найден в DataFrame.")
                 self.add_class("error")
             else:
-                self.remove_class("errorSuka")
+                self.remove_class("error")
 
                 if self.query_one('#checkbox_def', RadioButton).value:
-
-                    if input_api_key and isinstance(input_algoritm, int) and isinstance(optionlist_embedding, int):
-                        self.insert_password_json(input_api_key)
-                        self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding))
+                    
+                    if input_api_key and isinstance(input_algoritm, int) and isinstance(optionlist_embedding, int) and isinstance(maskedinput_cluster, str):
+                            self.insert_password_json(input_api_key)
+                            self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding, maskedinput_cluster))
                     else:
-                        error_widget.update("Форма кончила заполнена")
+                        error_widget.update("Форма не заполнена")
                         self.add_class("error")
 
                 elif self.query_one('#checkbox_embed', RadioButton).value:
 
-                    if isinstance(input_algoritm, int):
-                        self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding))
+                    if isinstance(input_algoritm, int) and isinstance(maskedinput_cluster, str):
+                        self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding, maskedinput_cluster))
                     else:
                         error_widget.update("Форма не заполнена")
                         self.add_class("error")
@@ -206,14 +218,13 @@ class MainScreen(Screen):
             self.add_class("error")
 
     
-    # TODO: Парсить несколько столбцов
-    async def on_input_changed(self, event: Input.Changed):
-        if event.input.id == 'input_column':
-            dataframe = self.query_one('#input_dataframe', Input).value
-            if dataframe and not os.path.exists(dataframe):
-                self.add_class("error")
-            else: 
-                self.remove_class("error")
+    @on(Input.Changed, '#input_column')
+    def on_input_changed(self):
+        dataframe = self.query_one('#input_dataframe', Input).value
+        if dataframe and not os.path.exists(dataframe):
+            self.add_class("error")
+        else: 
+            self.remove_class("error")
 
 
     def on_select_changed(self, event: Select.Changed):

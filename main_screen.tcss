@@ -43,12 +43,7 @@ MainScreen{
 #checkbox_def,
 #checkbox_embed,
 #checkbox_cluster{
-    width: 38;
-}
-
-#checkbox_cluster,
-#checkbox_embed,
-#checkbox_def {
+    width: 39;
     border: tall #45A29E;
 }
 
@@ -56,12 +51,28 @@ MainScreen{
 #input_api_key,
 #input_dataframe{
     border: tall #45A29E;
+}
 
+#maskedinput_cluster,
+#input_algoritm {
+    color: #b8a04f;
+    width: 20;
+}
+
+#maskedinput_cluster {
+    dock: right;
 }
 
 #input_algoritm {
-    color: #b8a04f;
+    dock: left;
 }
+
+MaskedInput.-valid {
+        border: tall $success 60%;
+    }
+    MaskedInput.-valid:focus {
+        border: tall $success;
+    }
 
 #container_inputs {
     align: center middle;
@@ -74,6 +85,7 @@ MainScreen{
 
 #vertical_input {
     margin-top: 1;
+    margin-left: 1;
     width: 40;
     dock: left;
     layout: vertical;
@@ -121,7 +133,7 @@ MainScreen{
 #button_insert_api_key {
     background: #FCE181;
     color: #0B0C10;
-    margin-left: 1;
+    margin-left: 2;
     margin-top: 2;
     width: 37;
 }
