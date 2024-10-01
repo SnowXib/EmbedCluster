@@ -1,7 +1,7 @@
 # Config
 
 config.json
-.csv
+*.csv
 
 # DataFrames
 
