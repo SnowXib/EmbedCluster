@@ -2,13 +2,29 @@ WorkScreen{
     align: center middle;
 }
 
+#container_info {
 
+}
 
+#container_logs {
+    align: center middle;
+    width: 100%;
+    margin: 0 7 1 7;
+    height: 18;
+    background: #222629;
+    border: tall #FCE181;
+}
 
+#scrollable_container_instruction {
+    scrollbar-background: #1F2833;
+    scrollbar-color: #66FCF1;
+    scrollbar-color-active: #FCE181;
+    scrollbar-color-hover: #45A29E;
+}
 
-
-
-
+#logdisplay{
+    align: center middle;
+}
 
 
 #butt{

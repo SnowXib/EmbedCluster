@@ -9,12 +9,15 @@ import os.path
 import pandas as pd
 import json
 from work_screen import WorkScreen
+from pathlib import Path
+import time
 
 
 class MainScreen(Screen):
 
     CSS_PATH = 'main_screen.tcss'
     AUTO_FOCUS = '#input_dataframe'
+
 
     def compose(self) -> ComposeResult:
         """Создание виджетов экрана авторизации."""
@@ -34,6 +37,18 @@ class MainScreen(Screen):
         info += data['info_main_screen']
 
         label = text2art(">>EmbedCluster>>", font='small')
+
+        current_directory = Path('.')
+
+        self.files = [f for f in current_directory.iterdir() 
+             if f.is_file() and f.suffix in ['.csv', '.xlsx']]
+
+        options_list = []
+        i = 0
+
+        for file in self.files:
+            i += 1
+            options_list.append((f'{file}', i))
         
         yield Container(
                 Container(
@@ -53,8 +68,13 @@ class MainScreen(Screen):
                     Container(
                         Static(renderable='Файла не существует', id='static_error'),
                         Container(
-                            Input(placeholder='Название датафрейма с расширением', id='input_dataframe'),
-                            Input(placeholder='Столбец для кластера', id='input_column'),
+                            Container(
+                                Select(prompt='Датафрейм', id='input_dataframe',
+                                       options=options_list),
+                                Input(placeholder='sep для csv', id='input_sep', disabled=True),
+                                       id='container_df'
+                            ),
+                            Select(prompt='Столбец для кластера', id='input_column', options=[]),
                             Input(placeholder='Ваш API ключ', id='input_api_key'),
                             Select(prompt='Embedding-model', tooltip='Информация о моделях находится выше', 
                                    options=[('text-embedding-3-small', 1), ('text-embedding-3-large', 2),
@@ -126,27 +146,55 @@ class MainScreen(Screen):
             json.dump(pas, file, indent=4)
 
     
-    def parse_df(self, input_df):
+    def parse_df(self, input_df, sep):
         self.remove_class("error")
         error_widget = self.query_one('#static_error', Static)
-
-        if '&' in input_df:
-            input_df.split('&')
-            df = input_df[0] 
-            sep = input_df[1]
-        else:
-            df = input_df
-            sep = ';'
-        # TODO Сделать в два потока
-        if input_df.endswith('.xlsx'):
-            cl = pd.read_excel(input_df, sheet_name=0, nrows=10)
-        elif input_df.endswith('.csv'):
-            cl = pd.read_csv(input_df, sep=sep, nrows=10)
-        error_widget.update("Неподдерживаемый формат файла.")
-        self.add_class("error")
         
-        return df, cl
-            
+        # TODO Сделать в два потока
+
+        if len(sep)>0:
+            if input_df.endswith('.xlsx'):
+                cl = pd.read_excel(input_df, sheet_name=0, nrows=10)
+            elif input_df.endswith('.csv'):
+                cl = pd.read_csv(input_df, sep=sep, nrows=10)
+            else:
+                error_widget.update("Неподдерживаемый формат файла.")
+                self.add_class("error")
+        else:
+            error_widget.update("Неподдерживаемый формат sep.")
+            self.add_class("error")
+            return None
+        
+        return cl
+    
+    
+
+    @on(Select.Changed, '#input_dataframe')
+    def input_dataframe(self):
+        index = self.query_one('#input_dataframe', Select).value
+        i = 0
+
+        for str_df in self.files:
+            i += 1
+            str_df = str(str_df)
+            if str_df.endswith('.csv') and i == index:
+                self.query_one('#input_sep').disabled = False    
+                self.df = str_df    
+
+        # i = 0
+# 
+        # for column in columns_list:
+            # i += 1
+            # options_list_columns.append((f'{column}', i))
+# 
+        # input_column._options = options_list_columns
+        
+    @on(Input.Changed, '#input_sep')
+    def on_input_sep_changed(self):
+        sep = self.query_one('#input_sep', Input).value
+        self.read_df(self.df, sep)
+
+
 
     @on(Button.Pressed, '#button_insert_api_key')
     def on_pressed_button_api(self):
@@ -160,7 +208,7 @@ class MainScreen(Screen):
 
     @on(Button.Pressed, '#b')
     def on_pressed_button_start(self):
-        input_df = self.query_one('#input_dataframe', Input).value
+        input_df = self.query_one('#input_dataframe', Select).value
     
         input_column = self.query_one('#input_column', Input).value
         input_api_key = self.query_one('#input_api_key', Input).value
@@ -171,6 +219,7 @@ class MainScreen(Screen):
         checkbox_embed = self.query_one('#checkbox_embed', RadioButton)
         checkbox_cluster = self.query_one('#checkbox_cluster', RadioButton)
         maskedinput_cluster = self.query_one('#maskedinput_cluster', MaskedInput).value
+        sep = self.query_one('#input_sep', Input).value
 
         mode = ''
 
@@ -183,7 +232,7 @@ class MainScreen(Screen):
 
         if input_df and os.path.exists(input_df):
 
-            df, cl = self.parse_df(input_df)
+            cl = self.parse_df(input_df, sep)
 
             column_name = self.query_one('#input_column', Input).value
             if column_name not in cl.columns:
@@ -217,37 +266,26 @@ class MainScreen(Screen):
             error_widget.update("Форма не заполнена")
             self.add_class("error")
 
-    
-    @on(Input.Changed, '#input_column')
-    def on_input_changed(self):
-        dataframe = self.query_one('#input_dataframe', Input).value
-        if dataframe and not os.path.exists(dataframe):
-            self.add_class("error")
-        else: 
-            self.remove_class("error")
-
-
-    def on_select_changed(self, event: Select.Changed):
-        if event.select.id == 'input_algoritm':
-            error_widget = self.query_one('#static_error', Static)
-            
-            dataframe = self.query_one('#input_dataframe', Input).value
-            if os.path.exists(dataframe):
-                self.read_df(dataframe)
-            else:
-                error_widget.update("Столбец не найден в DataFrame.")
-                self.add_class("error")
-
-
                     
-    def read_df(self, dataframe):
-
-        df, cl = self.parse_df(dataframe)
+    def read_df(self, dataframe, sep):
+        cl = self.parse_df(str(dataframe), sep)
         error_widget = self.query_one('#static_error', Static)
-            
-        column_name = self.query_one('#input_column', Input).value
-        if column_name not in cl.columns:
-            error_widget.update("Столбец не найден в DataFrame.")
-            self.add_class("error")
-        else:
-            self.remove_class("error")
+        input_column = self.query_one('#input_column', Select)
+        options_list = []
+
+        if cl is None:
+            return
+
+        for i, column in enumerate(cl.columns, start=1):
+            options_list.append((f'{column}', i))
+
+        input_column.set_options(options_list)
+        input_column.refresh()
+
+        
+        
+        # if column_name not in cl.columns:
+        #     error_widget.update("Столбец не найден в DataFrame.")
+        #     self.add_class("error")
+        # else:
+        #     self.remove_class("error")

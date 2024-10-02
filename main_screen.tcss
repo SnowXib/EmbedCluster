@@ -47,22 +47,40 @@ MainScreen{
     border: tall #45A29E;
 }
 
-#input_column,
-#input_api_key,
-#input_dataframe{
+Select {
+            width: 40;
+
+            &:focus > SelectCurrent {
+                border: tall #45A29E;
+            }
+
+            &.-expanded > SelectCurrent {
+                border: tall #45A29E;
+            }
+        }
+
+#input_api_key{
     border: tall #45A29E;
 }
 
+RadioSet:focus{
+    border: #45A29E;
+}
+
+#input_sep,
+#input_dataframe,
 #maskedinput_cluster,
 #input_algoritm {
     color: #b8a04f;
     width: 20;
 }
 
+#input_sep,
 #maskedinput_cluster {
     dock: right;
 }
 
+#input_dataframe,
 #input_algoritm {
     dock: left;
 }

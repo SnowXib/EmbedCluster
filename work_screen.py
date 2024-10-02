@@ -65,9 +65,12 @@ class WorkScreen(Screen):
                         Static(renderable='INFO', id='static_info'),
                         id='container_info'
                     ),
-                    VerticalScroll(
-                        LogDisplay(),
-                        id='scrollable_container_instruction',
+                    Container(
+                        VerticalScroll(
+                            LogDisplay('logdisplay'),
+                            id='scrollable_container_instruction',
+                        ),
+                        id='container_logs'
                     )
                 ),
                 Container(
@@ -137,7 +140,7 @@ class WorkScreen(Screen):
         progressbar = self.query_one('#progress_bar', ProgressBar)
         progressbar.update(progress=id_log)
 
-        if len(self.client_log) > 30:
+        if len(self.client_log) > 11:
             self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| - ID - | - Text - |\n']
 
         id_log_str = f'{id_log: <8}'
