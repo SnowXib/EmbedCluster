@@ -24,6 +24,7 @@ WorkScreen{
 
 #logdisplay{
     align: center middle;
+    width: 100%;
 }
 
 

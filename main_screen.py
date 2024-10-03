@@ -152,11 +152,21 @@ class MainScreen(Screen):
         
         # TODO Сделать в два потока
 
-        if len(sep)>0:
+        if len(sep) > 0:
             if input_df.endswith('.xlsx'):
-                cl = pd.read_excel(input_df, sheet_name=0, nrows=10)
+                try:
+                    cl = pd.read_excel(input_df, sheet_name=0, nrows=10)
+                except:
+                    error_widget.update("Ошибка чтения")
+                    self.add_class("error")
+                    return None
             elif input_df.endswith('.csv'):
-                cl = pd.read_csv(input_df, sep=sep, nrows=10)
+                try:
+                    cl = pd.read_csv(input_df, sep=sep, nrows=10)
+                except:
+                    error_widget.update("Ошибка чтения")
+                    self.add_class("error")
+                    return None
             else:
                 error_widget.update("Неподдерживаемый формат файла.")
                 self.add_class("error")
@@ -180,20 +190,11 @@ class MainScreen(Screen):
             if str_df.endswith('.csv') and i == index:
                 self.query_one('#input_sep').disabled = False    
                 self.df = str_df    
-
-        # i = 0
-# 
-        # for column in columns_list:
-            # i += 1
-            # options_list_columns.append((f'{column}', i))
-# 
-        # input_column._options = options_list_columns
         
     @on(Input.Changed, '#input_sep')
     def on_input_sep_changed(self):
         sep = self.query_one('#input_sep', Input).value
         self.read_df(self.df, sep)
-
 
 
     @on(Button.Pressed, '#button_insert_api_key')
@@ -208,18 +209,36 @@ class MainScreen(Screen):
 
     @on(Button.Pressed, '#b')
     def on_pressed_button_start(self):
-        input_df = self.query_one('#input_dataframe', Select).value
+        error_widget = self.query_one('#static_error', Static)
+        try:
+            input_df = self.df
+        except:
+            error_widget.update("Форма не заполнена")
+            self.add_class("error")
+            return None
     
-        input_column = self.query_one('#input_column', Input).value
+        input_column = self.query_one('#input_column', Select).value
+
+        if input_column is None:
+            error_widget.update("Форма не заполнена")
+            self.add_class("error")
+            return None
+
+        sep = self.query_one('#input_sep', Input).value
+
+        if sep == '':
+            error_widget.update("Форма не заполнена")
+            self.add_class("error")
+            return None
+
         input_api_key = self.query_one('#input_api_key', Input).value
         input_algoritm = self.query_one('#input_algoritm', Select).value
         optionlist_embedding = self.query_one('#optionlist_embedding', Select).value
-        error_widget = self.query_one('#static_error', Static)
         checkbox_def = self.query_one('#checkbox_def', RadioButton)
         checkbox_embed = self.query_one('#checkbox_embed', RadioButton)
         checkbox_cluster = self.query_one('#checkbox_cluster', RadioButton)
         maskedinput_cluster = self.query_one('#maskedinput_cluster', MaskedInput).value
-        sep = self.query_one('#input_sep', Input).value
+        
 
         mode = ''
 
@@ -234,33 +253,25 @@ class MainScreen(Screen):
 
             cl = self.parse_df(input_df, sep)
 
-            column_name = self.query_one('#input_column', Input).value
-            if column_name not in cl.columns:
-                error_widget.update("Столбец не найден в DataFrame.")
-                self.add_class("error")
-            else:
-                self.remove_class("error")
+            if self.query_one('#checkbox_def', RadioButton).value:
+                
+                if input_api_key and isinstance(input_algoritm, int) and isinstance(optionlist_embedding, int) and isinstance(maskedinput_cluster, str):
+                        self.insert_password_json(input_api_key)
+                        self.app.push_screen(WorkScreen(mode=mode, input_dataframe=input_df, input_column=input_column, input_api_key=input_api_key, input_algoritm=input_algoritm, optionlist_embedding=optionlist_embedding, sep=sep, maskedinput_cluster=maskedinput_cluster))
+                else:
+                    error_widget.update("Форма не заполнена")
+                    self.add_class("error")
 
-                if self.query_one('#checkbox_def', RadioButton).value:
-                    
-                    if input_api_key and isinstance(input_algoritm, int) and isinstance(optionlist_embedding, int) and isinstance(maskedinput_cluster, str):
-                            self.insert_password_json(input_api_key)
-                            self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding, maskedinput_cluster))
-                    else:
-                        error_widget.update("Форма не заполнена")
-                        self.add_class("error")
+            elif self.query_one('#checkbox_embed', RadioButton).value:
 
-                elif self.query_one('#checkbox_embed', RadioButton).value:
+                if isinstance(input_algoritm, int) and isinstance(maskedinput_cluster, str):
+                    self.app.push_screen(WorkScreen(mode=mode, input_dataframe=input_df, input_column=input_column, input_api_key=input_api_key, input_algoritm=input_algoritm, optionlist_embedding=optionlist_embedding, sep=sep, maskedinput_cluster=maskedinput_cluster))
+                else:
+                    error_widget.update("Форма не заполнена")
+                    self.add_class("error")
+            elif self.query_one('#checkbox_cluster', RadioButton).value:
 
-                    if isinstance(input_algoritm, int) and isinstance(maskedinput_cluster, str):
-                        self.app.push_screen(WorkScreen(mode, input_df, input_column, input_api_key, input_algoritm, optionlist_embedding, maskedinput_cluster))
-                    else:
-                        error_widget.update("Форма не заполнена")
-                        self.add_class("error")
-
-                elif self.query_one('#checkbox_cluster', RadioButton).value:
-
-                    self.app.push_screen(WorkScreen(mode=mode, input_dataframe=input_df, input_column=input_column, input_api_key=input_api_key, input_algoritm=input_algoritm, optionlist_embedding=optionlist_embedding))
+                self.app.push_screen(WorkScreen(mode=mode, input_dataframe=input_df, input_column=input_column, input_api_key=input_api_key, input_algoritm=input_algoritm, optionlist_embedding=optionlist_embedding, sep=sep, maskedinput_cluster=maskedinput_cluster))
 
         else:
             error_widget.update("Форма не заполнена")

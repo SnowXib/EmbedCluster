@@ -35,15 +35,54 @@ class WorkScreen(Screen):
 
     CSS_PATH = 'work_screen.tcss'
 
-    def __init__(self, mode, input_dataframe, input_column, input_api_key, input_algoritm, optionlist_embedding, maskedinput_cluster):
+    def __init__(self, mode, input_dataframe, input_column, input_api_key, input_algoritm, optionlist_embedding, maskedinput_cluster, sep):
         super().__init__()
         self.mode = mode
         self.input_dataframe = input_dataframe
-        self.input_column = input_column
+
+
+
+        if self.input_dataframe.endswith('.xlsx'):
+            cl = pd.read_excel(self.input_dataframe, sheet_name=0, nrows=10)
+        elif self.input_dataframe.endswith('.csv'):
+            cl = pd.read_csv(self.input_dataframe, sep=sep, nrows=10)
+
+        for i, column in enumerate(cl.columns, start=1):
+            if i == input_column:
+                self.input_column = column
+
         self.input_api_key = input_api_key
         self.input_algoritm = input_algoritm
         self.optionlist_embedding = optionlist_embedding
-        self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| - ID - | - Text - |\n']
+        self.sep = sep
+
+        max_width_id = 13
+        max_width_text = 28  # Ширина для input_column
+        max_width_embedding = 28
+
+        # Форматируем заголовок для input_column
+        input_column_text = self.input_column
+        extra_dashes_text = max_width_text - len(input_column_text)
+        left_dashes_text = extra_dashes_text // 2
+        right_dashes_text = extra_dashes_text - left_dashes_text
+        input_column_formatted = f'{"-" * left_dashes_text} {input_column_text} {"-" * right_dashes_text}'
+
+        # Форматируем заголовок ID
+        id_column_text = "ID"
+        extra_dashes_id = max_width_id - len(id_column_text)
+        left_dashes_id = extra_dashes_id // 2
+        right_dashes_id = extra_dashes_id - left_dashes_id
+        id_column_formatted = f'{"-" * left_dashes_id} {id_column_text} {"-" * right_dashes_id}'
+
+        # Форматируем заголовок Embedding
+        embedding_column_text = "Embedding"
+        extra_dashes_embedding = max_width_embedding - len(embedding_column_text)
+        left_dashes_embedding = extra_dashes_embedding // 2
+        right_dashes_embedding = extra_dashes_embedding - left_dashes_embedding
+        embedding_column_formatted = f'{"-" * left_dashes_embedding} {embedding_column_text} {"-" * right_dashes_embedding}'
+
+        # Инициализация client_log с заголовками
+        self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| {id_column_formatted} | {input_column_formatted} | {embedding_column_formatted} |\n']
         self.count_clusters = maskedinput_cluster
 
 
@@ -67,7 +106,7 @@ class WorkScreen(Screen):
                     ),
                     Container(
                         VerticalScroll(
-                            LogDisplay('logdisplay'),
+                            LogDisplay(id='logdisplay'),
                             id='scrollable_container_instruction',
                         ),
                         id='container_logs'
@@ -83,10 +122,11 @@ class WorkScreen(Screen):
         )
 
 
-    async def get_embedding(self, text, model):
+    async def get_embedding(self, inf, model):
         """API для получения эмбеддингов текста с помощью ChatGPT с обработкой ошибок"""
 
-        text = text.replace("\n", " ")
+        if isinstance(inf, str):
+            inf = inf.replace("\n", " ")
 
         if model == 1:
             model = 'text-embedding-3-small'
@@ -107,7 +147,7 @@ class WorkScreen(Screen):
 
             # Запрос эмбеддингов
             response = await asyncio.to_thread(
-                client.embeddings.create, input=[text], model=model
+                client.embeddings.create, input=[inf], model=model
             )
 
             embedding = response.data[0].embedding
@@ -125,9 +165,9 @@ class WorkScreen(Screen):
 
     async def background_task(self, df, model):
         for index, row in df.iterrows():
-            await self.logging(row['id'], row['text'])
+            embedding = await self.get_embedding(row[self.input_column], model)
 
-            embedding = await self.get_embedding(row['text'], model)
+            await self.logging(row['id'], row[self.input_column], embedding)
 
             df.at[index, 'ada_embedding'] = embedding
 
@@ -135,21 +175,61 @@ class WorkScreen(Screen):
         df.to_csv(new_file_name, index=False)
 
 
-    async def logging(self, id_log, log):
-        
+    async def logging(self, id_log, log, embedding):
+        log = str(log)
+        max_width_id = 15
+        max_width_text = 30
+        max_width_embedding = 30
+    
         progressbar = self.query_one('#progress_bar', ProgressBar)
         progressbar.update(progress=id_log)
-
+    
         if len(self.client_log) > 11:
-            self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| - ID - | - Text - |\n']
-
-        id_log_str = f'{id_log: <8}'
-        log_entry = f'\n{id_log_str}{log[:30]}...'
+            # Форматируем заголовок ID
+            id_column_text = "ID"
+            id_column_length = max_width_id - 2  # Для символов "-"
+            extra_dashes_id = id_column_length - len(id_column_text)
+            left_dashes_id = extra_dashes_id // 2
+            right_dashes_id = extra_dashes_id - left_dashes_id
+            id_column_formatted = f'{"-" * left_dashes_id} {id_column_text} {"-" * right_dashes_id}'
+    
+            # Форматируем заголовок для self.input_column
+            input_column_text = self.input_column
+            input_column_length = max_width_text - 2  # Для символов "-"
+            extra_dashes_text = input_column_length - len(input_column_text)
+            left_dashes_text = extra_dashes_text // 2
+            right_dashes_text = extra_dashes_text - left_dashes_text
+            input_column_formatted = f'{"-" * left_dashes_text} {input_column_text} {"-" * right_dashes_text}'
+    
+            # Форматируем заголовок Embedding
+            embedding_column_text = "Embedding"
+            embedding_column_length = max_width_embedding - 2  # Для символов "-"
+            extra_dashes_embedding = embedding_column_length - len(embedding_column_text)
+            left_dashes_embedding = extra_dashes_embedding // 2
+            right_dashes_embedding = extra_dashes_embedding - left_dashes_embedding
+            embedding_column_formatted = f'{"-" * left_dashes_embedding} {embedding_column_text} {"-" * right_dashes_embedding}'
+    
+            # Заголовок таблицы
+            self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| {id_column_formatted} | {input_column_formatted} | {embedding_column_formatted} |\n']
+    
+        id_log_str = f'{str(id_log):^{max_width_id}}'
+    
+        def format_text(text, max_width):
+            if len(text) > max_width:
+                return f'{text[:max_width - 3]}...'
+            return f'{text:^{max_width}}'
+    
+        formatted_text = format_text(log, max_width_text)
+        formatted_embedding = format_text(str(embedding), max_width_embedding)
+    
+        log_entry = f'| {id_log_str} | {formatted_text} | {formatted_embedding} |\n'
+    
         self.client_log.append(log_entry)
-
+    
         logs = ''.join(self.client_log)
+    
         self.query_one(LogDisplay).log_elapsed = logs
-
+    
 
     def state_embedding(self):
         mode = self.mode
@@ -160,18 +240,10 @@ class WorkScreen(Screen):
         if mode == (2 or 3):
             return None
         
-        if '&' in df_path:
-            df_path.split('&')
-            df = df_path[0] 
-            sep = df_path[1]
-        else:
-            df = df_path
-            sep = ';'
-        
         if df_path.endswith('.xlsx'):
             df = pd.read_excel(df_path, sheet_name=0, nrows=10)
         elif df_path.endswith('.csv'):
-            df = pd.read_csv(df_path, sep=sep, nrows=10)
+            df = pd.read_csv(df_path, sep=self.sep, nrows=10)
 
         progressbar.total = len(df)
 
@@ -226,7 +298,7 @@ class WorkScreen(Screen):
         await self.update_progress(progressbar, 80)
 
         alg['telegram_id'] = df['telegram_id']
-        alg['text'] = df['text']
+        alg[self.input_column] = df[self.input_column]
         alg['cluster'] = df['cluster']
         await self.update_progress(progressbar, 100)
 
@@ -235,8 +307,7 @@ class WorkScreen(Screen):
             x='x',
             y='y',
             color='cluster',
-            hover_name='text',
-            hover_data={'telegram_id': True},
+            hover_name=self.input_column,
             title=name,
         )
 
