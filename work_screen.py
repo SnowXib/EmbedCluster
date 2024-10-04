@@ -19,6 +19,7 @@ from umap import UMAP
 from sklearn.cluster import KMeans
 import ast
 import plotly.express as px
+import plotext as plt
 
 
 class LogDisplay(Widget):
@@ -40,8 +41,6 @@ class WorkScreen(Screen):
         self.mode = mode
         self.input_dataframe = input_dataframe
 
-
-
         if self.input_dataframe.endswith('.xlsx'):
             cl = pd.read_excel(self.input_dataframe, sheet_name=0, nrows=10)
         elif self.input_dataframe.endswith('.csv'):
@@ -57,31 +56,27 @@ class WorkScreen(Screen):
         self.sep = sep
 
         max_width_id = 13
-        max_width_text = 28  # Ширина для input_column
+        max_width_text = 28
         max_width_embedding = 28
 
-        # Форматируем заголовок для input_column
         input_column_text = self.input_column
         extra_dashes_text = max_width_text - len(input_column_text)
         left_dashes_text = extra_dashes_text // 2
         right_dashes_text = extra_dashes_text - left_dashes_text
         input_column_formatted = f'{"-" * left_dashes_text} {input_column_text} {"-" * right_dashes_text}'
 
-        # Форматируем заголовок ID
         id_column_text = "ID"
         extra_dashes_id = max_width_id - len(id_column_text)
         left_dashes_id = extra_dashes_id // 2
         right_dashes_id = extra_dashes_id - left_dashes_id
         id_column_formatted = f'{"-" * left_dashes_id} {id_column_text} {"-" * right_dashes_id}'
 
-        # Форматируем заголовок Embedding
         embedding_column_text = "Embedding"
         extra_dashes_embedding = max_width_embedding - len(embedding_column_text)
         left_dashes_embedding = extra_dashes_embedding // 2
         right_dashes_embedding = extra_dashes_embedding - left_dashes_embedding
         embedding_column_formatted = f'{"-" * left_dashes_embedding} {embedding_column_text} {"-" * right_dashes_embedding}'
 
-        # Инициализация client_log с заголовками
         self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| {id_column_formatted} | {input_column_formatted} | {embedding_column_formatted} |\n']
         self.count_clusters = maskedinput_cluster
 
@@ -171,6 +166,8 @@ class WorkScreen(Screen):
 
             df.at[index, 'ada_embedding'] = embedding
 
+        self.query_one('#butt').disabled = False
+
         new_file_name = self.input_dataframe.split('.')[0] + '_embedding.csv'
         df.to_csv(new_file_name, index=False)
 
@@ -185,31 +182,27 @@ class WorkScreen(Screen):
         progressbar.update(progress=id_log)
     
         if len(self.client_log) > 11:
-            # Форматируем заголовок ID
             id_column_text = "ID"
-            id_column_length = max_width_id - 2  # Для символов "-"
+            id_column_length = max_width_id - 2
             extra_dashes_id = id_column_length - len(id_column_text)
             left_dashes_id = extra_dashes_id // 2
             right_dashes_id = extra_dashes_id - left_dashes_id
             id_column_formatted = f'{"-" * left_dashes_id} {id_column_text} {"-" * right_dashes_id}'
     
-            # Форматируем заголовок для self.input_column
             input_column_text = self.input_column
-            input_column_length = max_width_text - 2  # Для символов "-"
+            input_column_length = max_width_text - 2
             extra_dashes_text = input_column_length - len(input_column_text)
             left_dashes_text = extra_dashes_text // 2
             right_dashes_text = extra_dashes_text - left_dashes_text
             input_column_formatted = f'{"-" * left_dashes_text} {input_column_text} {"-" * right_dashes_text}'
     
-            # Форматируем заголовок Embedding
             embedding_column_text = "Embedding"
-            embedding_column_length = max_width_embedding - 2  # Для символов "-"
+            embedding_column_length = max_width_embedding - 2
             extra_dashes_embedding = embedding_column_length - len(embedding_column_text)
             left_dashes_embedding = extra_dashes_embedding // 2
             right_dashes_embedding = extra_dashes_embedding - left_dashes_embedding
             embedding_column_formatted = f'{"-" * left_dashes_embedding} {embedding_column_text} {"-" * right_dashes_embedding}'
     
-            # Заголовок таблицы
             self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| {id_column_formatted} | {input_column_formatted} | {embedding_column_formatted} |\n']
     
         id_log_str = f'{str(id_log):^{max_width_id}}'
@@ -235,6 +228,7 @@ class WorkScreen(Screen):
         mode = self.mode
         df_path = self.input_dataframe
         model = self.optionlist_embedding
+        butt = self.query_one('#butt')
         progressbar = self.query_one('#progress_bar', ProgressBar)
 
         if mode == (2 or 3):
@@ -260,21 +254,19 @@ class WorkScreen(Screen):
 
     async def clustering(self, df, progressbar, input_algoritm):
         count_clusters = int(self.count_clusters)
-
-        
         await self.update_progress(progressbar, 0)
 
-        # Преобразование данных
         df['ada_embedding'] = df['ada_embedding'].apply(ast.literal_eval)
         await self.update_progress(progressbar, 10)
 
         embeddings = pd.DataFrame(df['ada_embedding'].tolist())
         await self.update_progress(progressbar, 20)
-        kmeans = KMeans(n_clusters=int(count_clusters))
+        
+        kmeans = KMeans(n_clusters=count_clusters)
         df['cluster'] = kmeans.fit_predict(embeddings)
         await self.update_progress(progressbar, 30)
 
-
+        # Выбор алгоритма
         if input_algoritm == 1:
             alg = FastICA(n_components=2)
             name = 'ICA'
@@ -290,7 +282,7 @@ class WorkScreen(Screen):
         elif input_algoritm == 5:
             alg = UMAP(n_components=2, random_state=10)
             name = 'UMAP'
-        
+
         await self.update_progress(progressbar, 40)
         alg = alg.fit_transform(embeddings)
         await self.update_progress(progressbar, 60)
@@ -302,16 +294,15 @@ class WorkScreen(Screen):
         alg['cluster'] = df['cluster']
         await self.update_progress(progressbar, 100)
 
-        fig = px.scatter(
-            alg,
-            x='x',
-            y='y',
-            color='cluster',
-            hover_name=self.input_column,
-            title=name,
-        )
-
-        fig.show()
+        # Использование plotext для отрисовки графика в строку
+        plt.scatter(alg['x'], alg['y'], color=alg['cluster'].tolist(), label=alg[self.input_column].tolist())
+        plt.title(name)
+        
+        # Запись графика в строку
+        graph_str = plt.build()  # Генерируем график в текстовом виде
+        
+        # Обновляем виджет LogDisplay
+        self.query_one(LogDisplay).log_elapsed = graph_str 
 
     def state_clustering(self, input_algoritm):
         mode = self.mode
@@ -323,13 +314,23 @@ class WorkScreen(Screen):
 
         df = pd.read_csv(df_path.split('.')[0] + '_embedding.csv', quotechar='"', escapechar='\\')
 
-        # Запуск фоновой задачи кластеризации
         self.run_worker(self.clustering(df, progressbar, input_algoritm))
+
+        butt = self.query_one('#butt')
+        butt.disable = False
+
+    
+    def state_work_df(self):
+        df_path = self.input_dataframe
+
+
 
     @on(Button.Pressed, '#butt')
     def on_pressed_butt(self):
         static_state = self.query_one('#static_state', Static)
         progressbar = self.query_one('#progress_bar', ProgressBar)
+        butt = self.query_one('#butt')
+        butt.disabled = True
 
         if str(static_state.renderable) == 'Ожидание процесса':
             static_state.update('Запрос embedding')
@@ -337,3 +338,6 @@ class WorkScreen(Screen):
         elif str(static_state.renderable) == 'Запрос embedding':
             static_state.update('Кластеризация')
             self.state_clustering(self.input_algoritm)
+        elif str(static_state.renderable) == 'Кластеризация':
+            static_state.update('Работа с DataFreame')
+            self.state_work_df()
