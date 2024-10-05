@@ -20,11 +20,17 @@ from sklearn.cluster import KMeans
 import ast
 import plotly.express as px
 import plotext as plt
+from art import text2art
+import httpx 
 
 
 class LogDisplay(Widget):
 
-    log_elapsed = reactive('')
+    logo = text2art("  >>EmbedCluster>>", font='bulbhead')
+
+    logo = '\n\n\n\n\n' + logo
+
+    log_elapsed = reactive(f'{logo}')
 
     def render(self):
         log = self.log_elapsed
@@ -55,9 +61,9 @@ class WorkScreen(Screen):
         self.optionlist_embedding = optionlist_embedding
         self.sep = sep
 
-        max_width_id = 13
-        max_width_text = 28
-        max_width_embedding = 28
+        max_width_id = 13 + 4
+        max_width_text = 28 + 4
+        max_width_embedding = 28 + 4
 
         input_column_text = self.input_column
         extra_dashes_text = max_width_text - len(input_column_text)
@@ -83,7 +89,18 @@ class WorkScreen(Screen):
 
     def compose(self):
 
-        label = ''
+        render = ''
+
+        label = text2art(">>EmbedCluster>>", font='bubble')
+
+        if self.mode == 'checkbox_def':
+            render = 'Ожидание процесса'
+        elif self.mode == 'checkbox_embed':
+            render = 'Запрос embedding'
+        elif self.mode == 'checkbox_cluster':
+            render = 'Кластеризация'
+        else:
+            render = self.mode
 
         yield Container(
             Container(
@@ -94,16 +111,13 @@ class WorkScreen(Screen):
             Container(
                 Container(
                     Container(
-                        Static(renderable='Ожидание процесса', id='static_state'),
+                        Static(renderable=render, id='static_state'),
                         ProgressBar(total=100, id='progress_bar'),
-                        Static(renderable='INFO', id='static_info'),
+                        Static(renderable = 'Ожидание', id='static_info'),
                         id='container_info'
                     ),
                     Container(
-                        VerticalScroll(
                             LogDisplay(id='logdisplay'),
-                            id='scrollable_container_instruction',
-                        ),
                         id='container_logs'
                     )
                 ),
@@ -150,15 +164,17 @@ class WorkScreen(Screen):
 
         except RequestException as e:
             info.update("Ошибка сети: проверьте подключение к интернету.")
+            self.add_class('error_info')
         except Exception as e:
             info.update(f"Произошла неизвестная ошибка: {e}")
+            self.add_class('error_info')
             with open('log.txt', 'w', encoding='utf-8') as file:
                 file.write(str(e))
 
         return None
     
 
-    async def background_task(self, df, model):
+    async def background_task_embedding(self, df, model):
         for index, row in df.iterrows():
             embedding = await self.get_embedding(row[self.input_column], model)
 
@@ -167,21 +183,22 @@ class WorkScreen(Screen):
             df.at[index, 'ada_embedding'] = embedding
 
         self.query_one('#butt').disabled = False
+        self.remove_class('success_info')
 
-        new_file_name = self.input_dataframe.split('.')[0] + '_embedding.csv'
+        new_file_name = 'embedding.csv'
         df.to_csv(new_file_name, index=False)
 
 
     async def logging(self, id_log, log, embedding):
         log = str(log)
-        max_width_id = 15
-        max_width_text = 30
-        max_width_embedding = 30
+        max_width_id = 15 + 4
+        max_width_text = 30 + 4
+        max_width_embedding = 30 + 4
     
         progressbar = self.query_one('#progress_bar', ProgressBar)
         progressbar.update(progress=id_log)
     
-        if len(self.client_log) > 11:
+        if len(self.client_log) > 13:
             id_column_text = "ID"
             id_column_length = max_width_id - 2
             extra_dashes_id = id_column_length - len(id_column_text)
@@ -222,7 +239,52 @@ class WorkScreen(Screen):
         logs = ''.join(self.client_log)
     
         self.query_one(LogDisplay).log_elapsed = logs
-    
+
+    # TODO: объединить функции logging и logging_name
+    async def logging_name(self, cluster, number, cluster_name):
+
+        max_width_cluster = 15 + 23
+        max_width_name = 30 + 23
+
+        if len(self.client_log) > 13 or len(self.client_log) == 0:
+            cluster_column_text = "CLUSTER"
+            cluster_column_length = max_width_cluster - 2
+            extra_dashes_cluster = cluster_column_length - len(cluster_column_text)
+            left_dashes_cluster = extra_dashes_cluster // 2
+            right_dashes_cluster = extra_dashes_cluster - left_dashes_cluster
+            cluster_column_formatted = f'{"-" * left_dashes_cluster} {cluster_column_text} {"-" * right_dashes_cluster}'
+
+            name_column_text = "NAME"
+            name_column_length = max_width_name - 2
+            extra_dashes_name = name_column_length - len(name_column_text)
+            left_dashes_name = extra_dashes_name // 2
+            right_dashes_name = extra_dashes_name - left_dashes_name
+            name_column_formatted = f'{"-" * left_dashes_name} {name_column_text} {"-" * right_dashes_name}'
+
+            self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| {cluster_column_formatted} | {name_column_formatted} |\n']
+
+        log = str(cluster_name['name'])
+
+        progressbar = self.query_one('#progress_bar', ProgressBar)
+        progressbar.update(progress=number)
+
+        cluster_str = f'{str(cluster):^{max_width_cluster}}'
+
+        def format_text(text, max_width):
+            if len(text) > max_width:
+                return f'{text[:max_width - 3]}...'
+            return f'{text:^{max_width}}'
+
+        formatted_name = format_text(cluster_name['name'], max_width_name)
+
+        log_entry = f'| {cluster_str} | {formatted_name} |\n'
+
+        self.client_log.append(log_entry)
+
+        logs = ''.join(self.client_log)
+
+        self.query_one(LogDisplay).log_elapsed = logs
+
 
     def state_embedding(self):
         mode = self.mode
@@ -230,20 +292,87 @@ class WorkScreen(Screen):
         model = self.optionlist_embedding
         butt = self.query_one('#butt')
         progressbar = self.query_one('#progress_bar', ProgressBar)
-
-        if mode == (2 or 3):
-            return None
         
         if df_path.endswith('.xlsx'):
-            df = pd.read_excel(df_path, sheet_name=0, nrows=10)
+            df = pd.read_excel(df_path, sheet_name=0, nrows=50)
         elif df_path.endswith('.csv'):
-            df = pd.read_csv(df_path, sep=self.sep, nrows=10)
+            df = pd.read_csv(df_path, sep=self.sep, nrows=50)
 
         progressbar.total = len(df)
 
         df['ada_embedding'] = None
 
-        self.run_worker(self.background_task(df, model))
+        self.run_worker(self.background_task_embedding(df, model))
+
+    
+    async def use_gpt(self, system: str, user: str, v=4, mode="text"):
+        """Асинхронная API для взаимодействия с GPT."""
+
+        with open('config.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+
+        client = openai.OpenAI(
+            api_key=str(data['api_key']),
+            base_url="https://api.proxyapi.ru/openai/v1"
+        )
+
+        model = "gpt-4o-mini" if v == 4 else "gpt-3.5-turbo-1106"
+
+        params = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+        }
+
+        if mode == "json":
+            params["response_format"] = {"type": "json_object"}
+            params["messages"][0]["content"] = (
+                "You are a helpful assistant designed to output JSON. " + system
+            )
+
+        chat_completion = await asyncio.to_thread(client.chat.completions.create, **params)
+
+        response_content = chat_completion.choices[0].message.content
+
+        if mode == "json":
+            return json.loads(response_content)  # Исправлено здесь
+
+        return response_content
+
+
+    async def background_task_name(self, df):
+        unique_clusters = df['cluster'].unique() 
+        result_data = []
+
+        with open('prompt.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+
+        prompt = data[0]['prompt']
+
+        self.client_log = ''
+        number = 0
+
+        for cluster in unique_clusters:
+            number += 1
+            cluster_values = df[df['cluster'] == cluster][self.input_column].head(5).tolist()
+
+            cluster_name = await self.use_gpt(system=f'Я провожу кластеризацию с помощью алгоритма {self.input_algoritm} + {prompt}', user=str(cluster_values), v=4, mode="json")
+
+            if cluster_name:
+                await self.logging_name(cluster, number, cluster_name)
+
+                result_data.append({'cluster': cluster, 'cluster_name': cluster_name})
+
+        result_df = pd.DataFrame(result_data)
+
+        new_file_name = 'name_cluster.csv'
+        result_df.to_csv(new_file_name, index=False)
+
+        # Восстанавливаем интерфейс, если это нужно
+        self.query_one('#butt').disabled = False
+        self.remove_class('success_info')
 
 
     async def update_progress(self, progressbar, value):
@@ -282,7 +411,7 @@ class WorkScreen(Screen):
         elif input_algoritm == 5:
             alg = UMAP(n_components=2, random_state=10)
             name = 'UMAP'
-
+        
         await self.update_progress(progressbar, 40)
         alg = alg.fit_transform(embeddings)
         await self.update_progress(progressbar, 60)
@@ -294,15 +423,20 @@ class WorkScreen(Screen):
         alg['cluster'] = df['cluster']
         await self.update_progress(progressbar, 100)
 
-        # Использование plotext для отрисовки графика в строку
-        plt.scatter(alg['x'], alg['y'], color=alg['cluster'].tolist(), label=alg[self.input_column].tolist())
-        plt.title(name)
-        
-        # Запись графика в строку
-        graph_str = plt.build()  # Генерируем график в текстовом виде
-        
-        # Обновляем виджет LogDisplay
-        self.query_one(LogDisplay).log_elapsed = graph_str 
+        fig = px.scatter(
+            alg,
+            x='x',
+            y='y',
+            color='cluster',
+            hover_name=self.input_column,
+            title=name,
+        )
+
+        fig.write_html("interactive_plot.html")
+
+        new_file_name = 'clusters.csv'
+        alg.to_csv(new_file_name, index=False)
+
 
     def state_clustering(self, input_algoritm):
         mode = self.mode
@@ -312,32 +446,47 @@ class WorkScreen(Screen):
         if mode == 'checkbox_cluster':
             return None
 
-        df = pd.read_csv(df_path.split('.')[0] + '_embedding.csv', quotechar='"', escapechar='\\')
+        df = pd.read_csv('embedding.csv', quotechar='"', escapechar='\\')
 
         self.run_worker(self.clustering(df, progressbar, input_algoritm))
 
-        butt = self.query_one('#butt')
-        butt.disable = False
+        butt = self.query_one('#butt', Button)
+        butt.disabled = False
+        self.remove_class('succes_info')
 
     
-    def state_work_df(self):
+    def state_name_cluster(self):
         df_path = self.input_dataframe
 
+        df_path = 'clusters.csv'
+
+        dataframe = pd.read_csv(df_path, sep=',')
+
+        progressbar = self.query_one('#progress_bar', ProgressBar)
+        progressbar.total = int(self.count_clusters)
+
+        self.run_worker(self.background_task_name(dataframe))
 
 
     @on(Button.Pressed, '#butt')
     def on_pressed_butt(self):
         static_state = self.query_one('#static_state', Static)
-        progressbar = self.query_one('#progress_bar', ProgressBar)
-        butt = self.query_one('#butt')
+        static_info = self.query_one('#static_info', Static)
+        butt = self.query_one('#butt', Button)
         butt.disabled = True
 
         if str(static_state.renderable) == 'Ожидание процесса':
+            static_info.update('Ошибок не найдено')
+            self.add_class('success_info')
             static_state.update('Запрос embedding')
             self.state_embedding()
         elif str(static_state.renderable) == 'Запрос embedding':
+            static_info.update('Ошибок не найдено')
+            self.add_class('success_info')
             static_state.update('Кластеризация')
             self.state_clustering(self.input_algoritm)
         elif str(static_state.renderable) == 'Кластеризация':
-            static_state.update('Работа с DataFreame')
-            self.state_work_df()
+            static_state.update('Работа с DataFrame')
+            self.state_name_cluster()
+        elif str(static_state.renderable) == 'Работа с DataFrame':
+            ...

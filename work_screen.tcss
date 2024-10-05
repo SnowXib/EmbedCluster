@@ -3,7 +3,33 @@ WorkScreen{
 }
 
 #container_info {
+    align: center middle;
+    width: 100%;
+    height: 5;
+    margin: 0 7 1 7;
+}
 
+#progress_bar {
+    width: 100%;
+    align: center middle;
+}
+
+#static_state {
+    width: 100%;
+    content-align: center middle;
+}
+
+#static_info {
+    width: 100%;
+    content-align: center middle;
+}
+
+.error_info #static_info{
+    color: red;
+}
+
+.success_info #static_info{
+    color: green;
 }
 
 #container_logs {
@@ -31,7 +57,7 @@ WorkScreen{
 #butt{
     background: #66FCF1;
     color: #0B0C10;
-    margin-left: 45;
+    margin-left: 42;
 }
 
 #butt:hover {

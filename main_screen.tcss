@@ -140,7 +140,6 @@ MaskedInput.-valid {
     background: #66FCF1;
 }
 
-
 .error {
     text-style: bold;
 }

@@ -177,13 +177,11 @@ class MainScreen(Screen):
         
         return cl
     
-    
 
     @on(Select.Changed, '#input_dataframe')
     def input_dataframe(self):
         index = self.query_one('#input_dataframe', Select).value
         i = 0
-
         for str_df in self.files:
             i += 1
             str_df = str(str_df)
@@ -238,7 +236,6 @@ class MainScreen(Screen):
         checkbox_embed = self.query_one('#checkbox_embed', RadioButton)
         checkbox_cluster = self.query_one('#checkbox_cluster', RadioButton)
         maskedinput_cluster = self.query_one('#maskedinput_cluster', MaskedInput).value
-        
 
         mode = ''
 
@@ -250,8 +247,6 @@ class MainScreen(Screen):
             mode = 'checkbox_cluster'
 
         if input_df and os.path.exists(input_df):
-
-            cl = self.parse_df(input_df, sep)
 
             if self.query_one('#checkbox_def', RadioButton).value:
                 
