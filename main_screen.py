@@ -1,6 +1,6 @@
-from textual.app import App, ComposeResult
+from textual.app import ComposeResult
 from textual import on
-from textual.containers import Container, Vertical, VerticalScroll, Horizontal
+from textual.containers import Container, VerticalScroll, Horizontal
 from textual.widgets import Button, Static, Input, Select, RadioButton, RadioSet
 from textual.widgets import MaskedInput
 from textual.screen import Screen
@@ -10,8 +10,7 @@ import pandas as pd
 import json
 from work_screen import WorkScreen
 from pathlib import Path
-import time
-
+from cluster_working import ClusterWorking
 
 class MainScreen(Screen):
 
@@ -94,10 +93,10 @@ class MainScreen(Screen):
                             RadioSet(
                                 RadioButton(label = 'Стандартный режим', id='checkbox_def', value=True),
                                 RadioButton(label = 'Не делать embedding', id='checkbox_embed'),
-                                RadioButton(label = 'Запустить отображение сразу', id='checkbox_cluster'),
+                                RadioButton(label = 'Работа с кластерами', id='checkbox_cluster'),
                                 id='radio_group',
                             ),
-                            Button('Вставить api_key из памяти', id='button_insert_api_key'),
+                             Button('Вставить api_key из памяти', id='button_insert_api_key'),
                             id='vertical_checkbox',
                         ),
                         id="container_inputs"
@@ -117,6 +116,7 @@ class MainScreen(Screen):
         input_api_key = self.query_one('#input_api_key')
         optionlist_embedding = self.query_one('#optionlist_embedding')
         input_algoritm = self.query_one('#input_algoritm')
+        input_column = self.query_one('#input_column')
         maskedinput_cluster = self.query_one('#maskedinput_cluster')
 
 
@@ -131,6 +131,7 @@ class MainScreen(Screen):
             input_api_key.disabled = True
             optionlist_embedding.disabled = True
             maskedinput_cluster.disabled = True
+            input_column.disabled = True
         
         elif event.pressed.id == 'checkbox_def':
             input_algoritm.disabled = False
@@ -138,7 +139,6 @@ class MainScreen(Screen):
             optionlist_embedding.disabled = False
             maskedinput_cluster.disabled = False
             
-
 
     def insert_password_json(self, password):
         pas = {'api_key': password}
@@ -248,6 +248,9 @@ class MainScreen(Screen):
 
         if input_df and os.path.exists(input_df):
 
+            if mode == 'checkbox_cluster':
+                self.app.push_screen(ClusterWorking())
+
             if self.query_one('#checkbox_def', RadioButton).value:
                 
                 if input_api_key and isinstance(input_algoritm, int) and isinstance(optionlist_embedding, int) and isinstance(maskedinput_cluster, str):
@@ -264,9 +267,6 @@ class MainScreen(Screen):
                 else:
                     error_widget.update("Форма не заполнена")
                     self.add_class("error")
-            elif self.query_one('#checkbox_cluster', RadioButton).value:
-
-                self.app.push_screen(WorkScreen(mode=mode, input_dataframe=input_df, input_column=input_column, input_api_key=input_api_key, input_algoritm=input_algoritm, optionlist_embedding=optionlist_embedding, sep=sep, maskedinput_cluster=maskedinput_cluster))
 
         else:
             error_widget.update("Форма не заполнена")

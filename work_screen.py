@@ -13,7 +13,7 @@ import openai
 from requests.exceptions import RequestException
 import time
 import asyncio
-from sklearn.decomposition import PCA, FastICA, TruncatedSVD
+from sklearn.decomposition import PCA, FastICA
 from sklearn.manifold import MDS, TSNE
 from umap import UMAP
 from sklearn.cluster import KMeans
@@ -21,7 +21,7 @@ import ast
 import plotly.express as px
 import plotext as plt
 from art import text2art
-import httpx 
+from cluster_working import ClusterWorking
 
 
 class LogDisplay(Widget):
@@ -107,7 +107,6 @@ class WorkScreen(Screen):
                     Static(renderable=label, id='static_label'),
                     id='container_head',
                 ),
-
             Container(
                 Container(
                     Container(
@@ -263,8 +262,6 @@ class WorkScreen(Screen):
 
             self.client_log = [f'Обработка DataFrame {self.input_dataframe}\n| {cluster_column_formatted} | {name_column_formatted} |\n']
 
-        log = str(cluster_name['name'])
-
         progressbar = self.query_one('#progress_bar', ProgressBar)
         progressbar.update(progress=number)
 
@@ -275,7 +272,7 @@ class WorkScreen(Screen):
                 return f'{text[:max_width - 3]}...'
             return f'{text:^{max_width}}'
 
-        formatted_name = format_text(cluster_name['name'], max_width_name)
+        formatted_name = format_text(cluster_name, max_width_name)
 
         log_entry = f'| {cluster_str} | {formatted_name} |\n'
 
@@ -361,9 +358,9 @@ class WorkScreen(Screen):
             cluster_name = await self.use_gpt(system=f'Я провожу кластеризацию с помощью алгоритма {self.input_algoritm} + {prompt}', user=str(cluster_values), v=4, mode="json")
 
             if cluster_name:
-                await self.logging_name(cluster, number, cluster_name)
+                await self.logging_name(cluster, number, cluster_name['name'])
 
-                result_data.append({'cluster': cluster, 'cluster_name': cluster_name})
+                result_data.append({'cluster': cluster, 'cluster_name': cluster_name['name']})
 
         result_df = pd.DataFrame(result_data)
 
@@ -482,11 +479,12 @@ class WorkScreen(Screen):
             self.state_embedding()
         elif str(static_state.renderable) == 'Запрос embedding':
             static_info.update('Ошибок не найдено')
-            self.add_class('success_info')
             static_state.update('Кластеризация')
             self.state_clustering(self.input_algoritm)
         elif str(static_state.renderable) == 'Кластеризация':
+            self.remove_class('visible')
+            self.add_class('unvisible')
             static_state.update('Работа с DataFrame')
             self.state_name_cluster()
         elif str(static_state.renderable) == 'Работа с DataFrame':
-            ...
+            self.app.push_screen(ClusterWorking())

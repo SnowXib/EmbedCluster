@@ -1,0 +1,25 @@
+ClusterWorking{
+    align: center middle;
+}
+
+#container_cmd{
+    layout: horizontal;
+    dock: bottom;
+    width: 100%;
+    margin: 0 2 1 2;
+    height: 5;
+    background: #FCE181;
+    color: #0B0C10;
+}
+
+#input_cmd{
+    width: 70%;
+    dock: left;
+    margin: 0 2 0 0;
+}
+
+#button_enter{
+    width: 30%;
+    dock: right;
+    margin: 0 0 0 2;
+}

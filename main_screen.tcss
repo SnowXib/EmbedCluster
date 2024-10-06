@@ -40,6 +40,7 @@ MainScreen{
     scrollbar-color-hover: #45A29E;
 }
 
+#checkbox_work,
 #checkbox_def,
 #checkbox_embed,
 #checkbox_cluster{
@@ -49,16 +50,14 @@ MainScreen{
 }
 
 Select {
-            width: 40;
-
-            &:focus > SelectCurrent {
-                border: tall #45A29E;
-            }
-
-            &.-expanded > SelectCurrent {
-                border: tall #45A29E;
-            }
-        }
+    width: 40;
+    &:focus > SelectCurrent {
+        border: tall #45A29E;
+    }
+    &.-expanded > SelectCurrent {
+        border: tall #45A29E;
+    }
+}
 
 Input:focus {
         border: tall #45A29E;
@@ -144,7 +143,7 @@ MaskedInput.-valid {
     text-style: bold;
 }
 
-.error #static_error {
+.error #b {
     display: block;
 }
 
