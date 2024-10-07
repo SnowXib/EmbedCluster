@@ -20,7 +20,6 @@ from sklearn.cluster import KMeans
 import ast
 import plotly.express as px
 import plotext as plt
-from art import text2art
 from cluster_working import ClusterWorking
 
 
