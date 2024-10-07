@@ -46,7 +46,7 @@ MainScreen{
 #checkbox_cluster{
     width: 39;
     border: tall #222629;
-    background: #2A2E31
+    background: #2A2E31;
 }
 
 Select {
@@ -143,7 +143,7 @@ MaskedInput.-valid {
     text-style: bold;
 }
 
-.error #b {
+.error #static_error {
     display: block;
 }
 

@@ -416,6 +416,7 @@ class WorkScreen(Screen):
         await self.update_progress(progressbar, 80)
 
         alg['telegram_id'] = df['telegram_id']
+        alg['id'] = df['id']
         alg[self.input_column] = df[self.input_column]
         alg['cluster'] = df['cluster']
         await self.update_progress(progressbar, 100)

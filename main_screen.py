@@ -125,6 +125,7 @@ class MainScreen(Screen):
             maskedinput_cluster.disabled = False
             input_api_key.disabled = True
             optionlist_embedding.disabled = True
+            input_column.disabled = False
         
         elif event.pressed.id == 'checkbox_cluster':
             input_algoritm.disabled = True
@@ -138,6 +139,7 @@ class MainScreen(Screen):
             input_api_key.disabled = False
             optionlist_embedding.disabled = False
             maskedinput_cluster.disabled = False
+            input_column.disabled = False
             
 
     def insert_password_json(self, password):

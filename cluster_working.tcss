@@ -6,15 +6,81 @@ ClusterWorking{
     layout: horizontal;
     dock: bottom;
     width: 100%;
-    margin: 0 2 1 2;
+    margin: 0 2 0 2;
     height: 5;
-    background: #FCE181;
     color: #0B0C10;
+}
+
+#container_body_input{
+    height: 8;
+    dock: bottom;
+    margin-top: 1;
+    margin-bottom: 2;
+}
+
+#markdown_instruction_information1{
+    margin-top: 1;
+}
+
+#container_head{
+    height: 8;
+}
+
+.error_cmd{
+    text-style: bold;
+}
+
+.success_cmd #static_error_cmd{
+    color: green;
+    display: block;
+}
+
+#container_table{
+    height: 15;
+}
+
+#datatable_df{
+    margin-left: 2;
+    margin-top: 2;
+    height: 100%;
+}
+
+#input_enter_column{
+    width: 38;
+    margin-left: 2;
+    dock: left;
+    background: #2A2E31;
+}
+
+#input_title{
+    width: 38;
+    margin-left: 40;
+    dock: left;
+    background: #2A2E31;
+}
+
+#button_graph{
+    dock: right;
+    width: 32;
+    margin-right: 2;
+}
+
+.error_cmd #static_error_cmd{
+    display: block;
+}
+
+#static_error_cmd{
+    dock: bottom;
+    color: #e74c3c;
+    display: None;
+    margin-left: 3;
+    margin-bottom: 1;
 }
 
 #input_cmd{
     width: 70%;
     dock: left;
+    background: #2A2E31;
     margin: 0 2 0 0;
 }
 
