@@ -290,9 +290,9 @@ class WorkScreen(Screen):
         progressbar = self.query_one('#progress_bar', ProgressBar)
         
         if df_path.endswith('.xlsx'):
-            df = pd.read_excel(df_path, sheet_name=0, nrows=50)
+            df = pd.read_excel(df_path, sheet_name=0)
         elif df_path.endswith('.csv'):
-            df = pd.read_csv(df_path, sep=self.sep, nrows=50)
+            df = pd.read_csv(df_path, sep=self.sep)
 
         progressbar.total = len(df)
 
